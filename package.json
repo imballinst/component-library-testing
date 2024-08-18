@@ -1,0 +1,11 @@
+{
+  "name": "component-library-testing",
+  "packageManager": "yarn@4.4.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "3.3.3",
+    "prettier-plugin-organize-imports": "4.0.0"
+  }
+}
