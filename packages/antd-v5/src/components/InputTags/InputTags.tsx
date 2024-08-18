@@ -1,32 +1,49 @@
 import { CloseOutlined } from '@ant-design/icons'
-import { Form, Input, InputProps, Tag } from 'antd'
-import { useId, useState } from 'react'
+import { Form, FormItemProps, Input, InputProps, Tag } from 'antd'
+import { FieldContext } from 'rc-field-form'
+import { useContext, useEffect, useId, useState } from 'react'
 
-interface Props {
-  name: string
-  label?: string
+interface Props extends Pick<FormItemProps, 'label'> {
+  name: string | (string | number)[]
+  validator?: (chips: string[], input: string) => FormItemProps['rules']
 }
 
 const ADD_CHIP_KEYS = ['Tab', 'Enter']
 
-export function InputTags({ name, label }: Props) {
+export function InputTags({ name, validator, ...formItemProps }: Props) {
   const id = useId()
-  // TODO: continue here
-  // const formInstance = Form.useFormInstance()
+  const formInstance = Form.useFormInstance()
+  const fieldName = useFieldLeafName(name)
 
-  const [chips, setChips] = useState<string[]>(new Array(10).fill('hell212o1'))
+  const [chips, setChips] = useState<string[]>([])
   const [input, setInput] = useState('')
+
+  const contextValue = Form.useWatch(fieldName, formInstance)
+
+  useEffect(() => {
+    formInstance.setFieldValue(fieldName, chips)
+  }, [formInstance, chips, fieldName])
+
+  useEffect(() => {
+    if (contextValue) {
+      setChips(contextValue)
+    }
+  }, [formInstance, contextValue])
+
+  if (!formInstance) {
+    throw new Error('InputTags component must be used under <Form>')
+  }
 
   return (
     <>
-      <Form.Item name={name} hidden>
+      <Form.Item name={fieldName} hidden rules={validator?.(chips, input)} {...formItemProps}>
         <Input />
       </Form.Item>
 
       <Form.Item
         className="inline-flex mb-0 w-full"
         wrapperCol={{ className: '[&>.ant-form-item-control-input]:min-h-[22px]' }}
-        label={label}
+        {...formItemProps}
       >
         <InputWrapper
           id={id}
@@ -53,7 +70,11 @@ export function InputTags({ name, label }: Props) {
               }
             }
           }}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            formInstance.validateFields([fieldName])
+
+            setInput(e.target.value)
+          }}
         >
           {chips.map((chip, idx) => (
             <Tag
@@ -87,4 +108,9 @@ function InputWrapper({ children, ...props }: InputProps) {
       <Input {...props} />
     </div>
   )
+}
+
+function useFieldLeafName(name: string | (string | number)[]) {
+  const fieldContext = useContext(FieldContext).prefixName ?? []
+  return fieldContext.concat(name)
 }
