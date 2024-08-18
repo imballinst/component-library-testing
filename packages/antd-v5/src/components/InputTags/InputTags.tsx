@@ -11,6 +11,8 @@ const ADD_CHIP_KEYS = ['Tab', 'Enter']
 
 export function InputTags({ name, label }: Props) {
   const id = useId()
+  // TODO: continue here
+  // const formInstance = Form.useFormInstance()
 
   const [chips, setChips] = useState<string[]>(new Array(10).fill('hell212o1'))
   const [input, setInput] = useState('')
@@ -21,10 +23,15 @@ export function InputTags({ name, label }: Props) {
         <Input />
       </Form.Item>
 
-      <Form.Item className="inline-flex mb-0" wrapperCol={{ className: '[&>.ant-form-item-control-input]:min-h-[22px]' }} label={label}>
+      <Form.Item
+        className="inline-flex mb-0 w-full"
+        wrapperCol={{ className: '[&>.ant-form-item-control-input]:min-h-[22px]' }}
+        label={label}
+      >
         <InputWrapper
           id={id}
-          className="p-0"
+          variant="borderless"
+          className="p-0 w-auto"
           value={input}
           onKeyDown={(e) => {
             if (ADD_CHIP_KEYS.includes(e.key)) {
@@ -74,10 +81,10 @@ export function InputTags({ name, label }: Props) {
 
 function InputWrapper({ children, ...props }: InputProps) {
   return (
-    <>
+    <div className="inline-flex gap-x-1 border p-1 mb-6 w-full flex-wrap">
       {children}
 
       <Input {...props} />
-    </>
+    </div>
   )
 }
