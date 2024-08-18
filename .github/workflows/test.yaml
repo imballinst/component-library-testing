@@ -22,5 +22,8 @@ jobs:
           node-version: 20
           cache: yarn
 
-      - name: Setup and run tests
+      - name: Install dependencies
+        run: yarn
+
+      - name: Run tests
         run: yarn workspaces foreach -A run test
