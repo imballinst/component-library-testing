@@ -1,7 +1,9 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Form, FormItemProps, Input, InputProps, Tag } from 'antd'
+import useFormItemStatus from 'antd/es/form/hooks/useFormItemStatus'
+import classNames from 'classnames'
 import { FieldContext } from 'rc-field-form'
-import { useContext, useEffect, useId, useState } from 'react'
+import { ReactNode, useContext, useEffect, useId, useState } from 'react'
 
 interface Props extends Pick<FormItemProps, 'label'> {
   name: string | (string | number)[]
@@ -16,13 +18,12 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   const fieldName = useFieldLeafName(name)
 
   const [chips, setChips] = useState<string[]>([])
+  const [errors, setErrors] = useState<ReactNode[]>([])
   const [input, setInput] = useState('')
 
   const contextValue = Form.useWatch(fieldName, formInstance)
 
-  useEffect(() => {
-    formInstance.setFieldValue(fieldName, chips)
-  }, [formInstance, chips, fieldName])
+  useEffect(() => {}, [formInstance, chips, fieldName])
 
   useEffect(() => {
     if (contextValue) {
@@ -30,19 +31,35 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
     }
   }, [formInstance, contextValue])
 
+  async function updateState(chipsSetter: (prev: string[]) => string[], nextInput: string) {
+    const result = await formInstance.validateFields(fieldName)
+    // Still can't seem to prevent from inputting tag; there's also this weird key "0" at the top.
+    console.info('result', result)
+
+    const nextChips = chipsSetter(chips)
+
+    setInput(nextInput)
+    setChips(chipsSetter)
+    formInstance.setFieldValue(fieldName, nextChips)
+  }
+
   if (!formInstance) {
     throw new Error('InputTags component must be used under <Form>')
   }
 
+  const hasErrors = errors.length > 0
+
   return (
     <>
       <Form.Item name={fieldName} hidden rules={validator?.(chips, input)} {...formItemProps}>
-        <Input />
+        <Input addonBefore={<FormItemStatusForwarder setErrors={setErrors} />} />
       </Form.Item>
 
       <Form.Item
         className="inline-flex mb-0 w-full"
         wrapperCol={{ className: '[&>.ant-form-item-control-input]:min-h-[22px]' }}
+        help={hasErrors ? errors : undefined}
+        validateStatus={hasErrors ? 'error' : undefined}
         {...formItemProps}
       >
         <InputWrapper
@@ -50,12 +67,12 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
           variant="borderless"
           className="p-0 w-auto"
           value={input}
+          hasErrors={hasErrors}
           onKeyDown={(e) => {
             if (ADD_CHIP_KEYS.includes(e.key)) {
               e.preventDefault()
 
-              setChips((prev) => prev.concat(input))
-              setInput('')
+              updateState((prev) => prev.concat(input), '')
 
               return
             }
@@ -64,14 +81,13 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
               if (input === '' && chips.length > 0) {
                 e.preventDefault()
 
-                setInput(chips[chips.length - 1])
-                setChips((chips) => chips.slice(0, -1))
+                updateState((chips) => chips.slice(0, -1), chips[chips.length - 1])
                 return
               }
             }
           }}
-          onChange={(e) => {
-            formInstance.validateFields([fieldName])
+          onChange={async (e) => {
+            await formInstance.validateFields([fieldName])
 
             setInput(e.target.value)
           }}
@@ -100,9 +116,13 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   )
 }
 
-function InputWrapper({ children, ...props }: InputProps) {
+function InputWrapper({ children, hasErrors, ...props }: InputProps & { hasErrors: boolean }) {
   return (
-    <div className="inline-flex gap-x-1 border p-1 mb-6 w-full flex-wrap">
+    <div
+      className={classNames('inline-flex gap-x-1 border rounded p-1 w-full flex-wrap', {
+        'border-[#ff4d4f]': hasErrors,
+      })}
+    >
       {children}
 
       <Input {...props} />
@@ -113,4 +133,14 @@ function InputWrapper({ children, ...props }: InputProps) {
 function useFieldLeafName(name: string | (string | number)[]) {
   const fieldContext = useContext(FieldContext).prefixName ?? []
   return fieldContext.concat(name)
+}
+
+function FormItemStatusForwarder({ setErrors }: { setErrors: (errors: ReactNode[]) => void }) {
+  const { errors } = useFormItemStatus()
+
+  useEffect(() => {
+    setErrors(errors)
+  }, [setErrors, errors])
+
+  return null
 }

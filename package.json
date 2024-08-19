@@ -7,5 +7,9 @@
   "devDependencies": {
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "4.0.0"
+  },
+  "dependencies": {
+    "antd-v5": "workspace:*",
+    "classnames": "2.5.1"
   }
 }
