@@ -19,17 +19,10 @@ export const InputTagsStory: Story = () => {
               name={[field.name, 'roles']}
               label="Roles"
               validator={(chips, input) => {
-                console.info('validator called', chips, input)
-                return [
-                  {
-                    validator() {
-                      console.info('validator internal called')
-                      if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
+                console.info('validator internal called', chips, input)
+                if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
 
-                      return Promise.resolve()
-                    },
-                  },
-                ]
+                return Promise.resolve()
               }}
             />
           ))

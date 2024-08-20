@@ -7,7 +7,7 @@ import { ReactNode, useContext, useEffect, useId, useState } from 'react'
 
 interface Props extends Pick<FormItemProps, 'label'> {
   name: string | (string | number)[]
-  validator?: (chips: string[], input: string) => FormItemProps['rules']
+  validator?: (chips: string[], input: string) => Promise<unknown>
 }
 
 const ADD_CHIP_KEYS = ['Tab', 'Enter']
@@ -23,8 +23,6 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
 
   const contextValue = Form.useWatch(fieldName, formInstance)
 
-  useEffect(() => {}, [formInstance, chips, fieldName])
-
   useEffect(() => {
     if (contextValue) {
       setChips(contextValue)
@@ -32,14 +30,12 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   }, [formInstance, contextValue])
 
   async function updateState(chipsSetter: (prev: string[]) => string[], nextInput: string) {
-    const result = await formInstance.validateFields(fieldName)
-    // Still can't seem to prevent from inputting tag; there's also this weird key "0" at the top.
-    console.info('result', result)
+    await formInstance.validateFields(fieldName)
 
     const nextChips = chipsSetter(chips)
 
     setInput(nextInput)
-    setChips(chipsSetter)
+    setChips(nextChips)
     formInstance.setFieldValue(fieldName, nextChips)
   }
 
@@ -48,10 +44,26 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   }
 
   const hasErrors = errors.length > 0
+  console.info('name', name, 'fieldName', fieldName)
 
   return (
     <>
-      <Form.Item name={fieldName} hidden rules={validator?.(chips, input)} {...formItemProps}>
+      <Form.Item
+        name={name}
+        rules={[
+          {
+            validator() {
+              console.info('xdd', name, chips, input)
+              if (chips.includes(input)) return Promise.reject(new Error('xdd'))
+              return Promise.resolve()
+
+              // if (!validator) return Promise.resolve()
+              // return validator(chips, input)
+            },
+          },
+        ]}
+        {...formItemProps}
+      >
         <Input addonBefore={<FormItemStatusForwarder setErrors={setErrors} />} />
       </Form.Item>
 
@@ -86,9 +98,13 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
               }
             }
           }}
+          onBlur={() => {
+            if (input !== '') {
+              updateState((prev) => prev.concat(input), '')
+            }
+          }}
           onChange={async (e) => {
-            await formInstance.validateFields([fieldName])
-
+            await formInstance.validateFields(fieldName)
             setInput(e.target.value)
           }}
         >
