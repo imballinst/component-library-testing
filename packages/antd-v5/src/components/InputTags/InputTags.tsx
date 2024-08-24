@@ -29,14 +29,16 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
     }
   }, [formInstance, contextValue])
 
-  async function updateState(chipsSetter: (prev: string[]) => string[], nextInput: string) {
-    await formInstance.validateFields(fieldName)
+  async function updateState(nextInput: string, chipsSetter?: (prev: string[]) => string[]) {
+    await formInstance.validateFields([fieldName])
 
-    const nextChips = chipsSetter(chips)
+    if (chipsSetter) {
+      const nextChips = chipsSetter(chips)
+      setChips(nextChips)
+      formInstance.setFieldValue(fieldName, nextChips)
+    }
 
     setInput(nextInput)
-    setChips(nextChips)
-    formInstance.setFieldValue(fieldName, nextChips)
   }
 
   if (!formInstance) {
@@ -44,21 +46,17 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   }
 
   const hasErrors = errors.length > 0
-  console.info('name', name, 'fieldName', fieldName)
 
   return (
     <>
       <Form.Item
+        hidden
         name={name}
         rules={[
           {
             validator() {
-              console.info('xdd', name, chips, input)
-              if (chips.includes(input)) return Promise.reject(new Error('xdd'))
-              return Promise.resolve()
-
-              // if (!validator) return Promise.resolve()
-              // return validator(chips, input)
+              if (!validator) return Promise.resolve()
+              return validator(chips, input)
             },
           },
         ]}
@@ -84,7 +82,7 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
             if (ADD_CHIP_KEYS.includes(e.key)) {
               e.preventDefault()
 
-              updateState((prev) => prev.concat(input), '')
+              updateState('', (prev) => prev.concat(input))
 
               return
             }
@@ -93,18 +91,17 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
               if (input === '' && chips.length > 0) {
                 e.preventDefault()
 
-                updateState((chips) => chips.slice(0, -1), chips[chips.length - 1])
+                updateState(chips[chips.length - 1], (chips) => chips.slice(0, -1))
                 return
               }
             }
           }}
           onBlur={() => {
             if (input !== '') {
-              updateState((prev) => prev.concat(input), '')
+              updateState('', (prev) => prev.concat(input))
             }
           }}
-          onChange={async (e) => {
-            await formInstance.validateFields(fieldName)
+          onChange={(e) => {
             setInput(e.target.value)
           }}
         >

@@ -9,22 +9,32 @@ export const InputTagsStory: Story = () => {
       onFinish={(values) => alert(JSON.stringify(values))}
       className="flex flex-col gap-y-4"
     >
-      <InputTags name="roles" label="Roles" />
+      {/* <InputTags
+        name="roles"
+        label="Roles"
+        validator={(chips, input) => {
+          if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
+
+          return Promise.resolve()
+        }}
+      /> */}
 
       <Form.List name="children">
         {(fields) => {
           return fields.map((field) => (
-            <InputTags
-              key={`${field.name}-roles`}
-              name={[field.name, 'roles']}
-              label="Roles"
-              validator={(chips, input) => {
-                console.info('validator internal called', chips, input)
-                if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
+            <>
+              <InputTags
+                key={`${field.name}-roles`}
+                name={[field.name, 'roles']}
+                label="Roles"
+                validator={(chips, input) => {
+                  console.info('validator internal called', chips, input)
+                  if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
 
-                return Promise.resolve()
-              }}
-            />
+                  return Promise.resolve()
+                }}
+              />
+            </>
           ))
         }}
       </Form.List>
