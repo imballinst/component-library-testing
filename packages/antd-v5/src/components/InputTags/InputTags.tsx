@@ -1,6 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Form, FormItemProps, Input, InputProps, Tag } from 'antd'
-import useFormItemStatus from 'antd/es/form/hooks/useFormItemStatus'
 import classNames from 'classnames'
 import { FieldContext } from 'rc-field-form'
 import { ReactNode, useContext, useEffect, useId, useState } from 'react'
@@ -29,11 +28,10 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
     }
   }, [formInstance, contextValue])
 
-  async function updateState(nextInput: string, chipsSetter?: (prev: string[]) => string[]) {
+  async function updateState(nextInput: string, nextChips: string[]) {
     await formInstance.validateFields([fieldName])
 
-    if (chipsSetter) {
-      const nextChips = chipsSetter(chips)
+    if (nextChips) {
       setChips(nextChips)
       formInstance.setFieldValue(fieldName, nextChips)
     }
@@ -50,8 +48,8 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   return (
     <>
       <Form.Item
-        hidden
         name={name}
+        hidden
         rules={[
           {
             validator() {
@@ -62,7 +60,9 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
         ]}
         {...formItemProps}
       >
-        <Input addonBefore={<FormItemStatusForwarder setErrors={setErrors} />} />
+        <InputWrapper hasErrors={false}>
+          <FormItemStatusForwarder setErrors={setErrors} />
+        </InputWrapper>
       </Form.Item>
 
       <Form.Item
@@ -82,7 +82,7 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
             if (ADD_CHIP_KEYS.includes(e.key)) {
               e.preventDefault()
 
-              updateState('', (prev) => prev.concat(input))
+              updateState('', chips.concat(input))
 
               return
             }
@@ -91,14 +91,14 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
               if (input === '' && chips.length > 0) {
                 e.preventDefault()
 
-                updateState(chips[chips.length - 1], (chips) => chips.slice(0, -1))
+                updateState(chips[chips.length - 1], chips.slice(0, -1))
                 return
               }
             }
           }}
           onBlur={() => {
             if (input !== '') {
-              updateState('', (prev) => prev.concat(input))
+              updateState('', chips.concat(input))
             }
           }}
           onChange={(e) => {
@@ -149,7 +149,7 @@ function useFieldLeafName(name: string | (string | number)[]) {
 }
 
 function FormItemStatusForwarder({ setErrors }: { setErrors: (errors: ReactNode[]) => void }) {
-  const { errors } = useFormItemStatus()
+  const { errors } = Form.Item.useStatus()
 
   useEffect(() => {
     setErrors(errors)

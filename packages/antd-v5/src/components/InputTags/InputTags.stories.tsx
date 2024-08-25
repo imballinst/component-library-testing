@@ -1,40 +1,23 @@
 import { Story } from '@ladle/react'
 import { Button, Form } from 'antd'
+import { Fragment } from 'react'
 import { InputTags } from './InputTags'
 
 export const InputTagsStory: Story = () => {
   return (
     <Form
-      initialValues={{ roles: ['haha'], children: [{ roles: ['hehe'] }] }}
+      initialValues={{ roles: [], children: [{ roles: [] }] }}
       onFinish={(values) => alert(JSON.stringify(values))}
       className="flex flex-col gap-y-4"
     >
-      {/* <InputTags
-        name="roles"
-        label="Roles"
-        validator={(chips, input) => {
-          if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
-
-          return Promise.resolve()
-        }}
-      /> */}
+      <InputTags name="roles" label="Roles" validator={validatorFunction} />
 
       <Form.List name="children">
         {(fields) => {
           return fields.map((field) => (
-            <>
-              <InputTags
-                key={`${field.name}-roles`}
-                name={[field.name, 'roles']}
-                label="Roles"
-                validator={(chips, input) => {
-                  console.info('validator internal called', chips, input)
-                  if (chips.includes(input)) return Promise.reject(new Error('Input must be unique'))
-
-                  return Promise.resolve()
-                }}
-              />
-            </>
+            <Fragment key={field.name}>
+              <InputTags name={[field.name, 'roles']} label="Child roles" validator={validatorFunction} />
+            </Fragment>
           ))
         }}
       </Form.List>
@@ -46,3 +29,10 @@ export const InputTagsStory: Story = () => {
   )
 }
 InputTagsStory.displayName = 'Input tags'
+
+// Helper functions.
+function validatorFunction(chips: string[], input: string): Promise<unknown> {
+  if (chips.length === 0) return Promise.reject(new Error(`There should be at least 1 role.`))
+  if (chips.includes(input)) return Promise.reject(new Error('Input must be unique.'))
+  return Promise.resolve()
+}
