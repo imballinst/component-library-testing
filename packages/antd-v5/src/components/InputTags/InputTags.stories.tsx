@@ -32,7 +32,6 @@ InputTagsStory.displayName = 'Input tags'
 
 // Helper functions.
 function validatorFunction(chips: string[], input: string): Promise<unknown> {
-  if (chips.length === 0) return Promise.reject(new Error(`There should be at least 1 role.`))
-  if (chips.includes(input)) return Promise.reject(new Error('Input must be unique.'))
+  if (chips.length === 0 && input === '') return Promise.reject(new Error(`There should be at least 1 role.`))
   return Promise.resolve()
 }

@@ -11,7 +11,7 @@ interface Props extends Pick<FormItemProps, 'label'> {
 
 const ADD_CHIP_KEYS = ['Tab', 'Enter']
 
-export function InputTags({ name, validator, ...formItemProps }: Props) {
+export function InputTags({ name, validator, label, ...formItemProps }: Props) {
   const id = useId()
   const formInstance = Form.useFormInstance()
   const fieldName = useFieldLeafName(name)
@@ -29,7 +29,10 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   }, [formInstance, contextValue])
 
   async function updateState(nextInput: string, nextChips: string[]) {
-    await formInstance.validateFields([fieldName])
+    if (chips.includes(input)) {
+      setErrors(['Input must be unique.'])
+      return
+    }
 
     if (nextChips) {
       setChips(nextChips)
@@ -60,7 +63,7 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
         ]}
         {...formItemProps}
       >
-        <InputWrapper hasErrors={false}>
+        <InputWrapper>
           <FormItemStatusForwarder setErrors={setErrors} />
         </InputWrapper>
       </Form.Item>
@@ -70,6 +73,8 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
         wrapperCol={{ className: '[&>.ant-form-item-control-input]:min-h-[22px]' }}
         help={hasErrors ? errors : undefined}
         validateStatus={hasErrors ? 'error' : undefined}
+        htmlFor={id}
+        label={label}
         {...formItemProps}
       >
         <InputWrapper
@@ -79,7 +84,7 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
           value={input}
           hasErrors={hasErrors}
           onKeyDown={(e) => {
-            if (ADD_CHIP_KEYS.includes(e.key)) {
+            if (ADD_CHIP_KEYS.includes(e.key) && input !== '') {
               e.preventDefault()
 
               updateState('', chips.concat(input))
@@ -129,7 +134,7 @@ export function InputTags({ name, validator, ...formItemProps }: Props) {
   )
 }
 
-function InputWrapper({ children, hasErrors, ...props }: InputProps & { hasErrors: boolean }) {
+function InputWrapper({ children, hasErrors, ...props }: InputProps & { hasErrors?: boolean }) {
   return (
     <div
       className={classNames('inline-flex gap-x-1 border rounded p-1 w-full flex-wrap', {
