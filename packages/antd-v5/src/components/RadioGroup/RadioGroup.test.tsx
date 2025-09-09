@@ -1,11 +1,5 @@
 import '@testing-library/jest-dom'
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { Button, Form, Radio } from 'antd'
 import { expect, test, vi } from 'vitest'
 
@@ -32,13 +26,10 @@ test('base', async () => {
       <div>
         <Form.Item name="option" label={<span id="form-label">Option</span>} htmlFor={undefined}>
           <div role="radiogroup" aria-labelledby="form-label">
-            <Radio.Group
-              options={OPTIONS}
-            />
+            <Radio.Group options={OPTIONS} />
           </div>
         </Form.Item>
       </div>
-
 
       <Button htmlType="submit">Submit</Button>
     </Form>,
